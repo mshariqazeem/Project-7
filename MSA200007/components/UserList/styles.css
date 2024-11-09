@@ -1,0 +1,30 @@
+/* Main container for the user list */
+.user-list-container {
+    padding: 10px;
+    background-color: lightcyan;
+    text-align: center;
+  }
+  
+/* Typography for the user list title */
+.user-list-title {
+    font-weight: 500;
+    color: black;
+    text-decoration: underline;
+}
+  
+/* Link styling for user names */
+.user-list-item a {
+    color: lightseagreen;
+    text-decoration: none;
+}
+  
+.user-list-item a:hover {
+    color: seagreen;
+    text-decoration: underline;
+}
+  
+/* Divider styling */
+.user-list-divider {
+    background-color: darkcyan;
+    margin: 15px 0;
+}  

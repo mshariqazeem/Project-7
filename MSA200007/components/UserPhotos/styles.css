@@ -1,0 +1,58 @@
+/* Main container for the photo section */
+.photo-section-container {
+    padding: 10px;
+    background-color: lightsteelblue;
+  }
+  
+  /* Individual photo container */
+  .photo-container {
+    padding: 10px;
+    margin-bottom: 20px;
+    background-color: blanchedalmond;
+    border-radius: 10px;
+  }
+  
+  /* Styling for the photo image */
+  .photo-container img {
+    padding: 10px;
+    width: 50%;
+    display: block;
+  }
+  
+  /* Date/time styling for photos */
+  .photo-date {
+    padding: 0px 10px;
+    font-size: 0.9em;
+    color: grey;
+    background-color: blanchedalmond;
+  }
+  
+  /* Comment section styling */
+  .comment-section {
+    padding: 10px;
+  }
+  
+  /* Comment text styling */
+  .comment-text {
+    color: brown;
+    margin-bottom: 8px;
+  }
+  
+  /* Commenter link styling */
+  .commenter-link {
+    color: blue;
+    font-weight: 500;
+    text-decoration: none;
+  }
+  
+  .commenter-link:hover {
+    color: darkblue;
+    text-decoration: underline;
+  }
+  
+  /* Date/time styling for comments */
+  .comment-date {
+    font-size: 0.8em;
+    color: grey;
+    margin-bottom: 12px;
+  }
