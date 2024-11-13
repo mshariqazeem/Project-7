@@ -22,10 +22,10 @@ function UserPhotosRoute() {
 }
 
 function PhotoShare() {
-  const [user, setUser] = useState(null); // State to store the logged-in user
+  const [loggedUser, setLoggedUser] = useState(null); // State to store the logged-in user
 
   const onLogout = () => {
-    setUser(null); // Clear the user state on logout
+    setLoggedUser(null); // Clear the user state on logout
   };
 
   return (
@@ -33,23 +33,23 @@ function PhotoShare() {
       <div>
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <TopBar onLogout={onLogout} />
+            <TopBar loggedUser={loggedUser} onLogout={onLogout} />
           </Grid>
           <div className="main-topbar-buffer" />
           <Grid item sm={3}>
             <Paper className="main-grid-item">
-              {user ? <UserList /> : <Navigate to="/login-register" />}
+              {loggedUser ? <UserList /> : <Navigate to="/login-register" />}
             </Paper>
           </Grid>
           <Grid item sm={9}>
             <Paper className="main-grid-item">
               <Routes>
-                <Route path="/" element={user ? <Navigate to={`/users/${user._id}`} /> : <Navigate to="/login-register" />} />
-                <Route path="/users" element={user ? <Navigate to={`/users/${user._id}`} /> : <Navigate to="/login-register" />} />
-                <Route path="/users/:userId" element={user ? <UserDetailRoute /> : <Navigate to="/login-register" />} />
-                <Route path="/photos" element={user ? <Navigate to={`/photos/${user._id}`} /> : <Navigate to="/login-register" />} />
-                <Route path="/photos/:userId" element={user ? <UserPhotosRoute /> : <Navigate to="/login-register" />} />
-                <Route path="/login-register" element={!user ? <LoginRegister onLogin={setUser} /> : <Navigate to="/" />}/>
+                <Route path="/" element={loggedUser ? <Navigate to={`/users/${loggedUser._id}`} /> : <Navigate to="/login-register" />} />
+                <Route path="/users" element={loggedUser ? <Navigate to={`/users/${loggedUser._id}`} /> : <Navigate to="/login-register" />} />
+                <Route path="/users/:userId" element={loggedUser ? <UserDetailRoute /> : <Navigate to="/login-register" />} />
+                <Route path="/photos" element={loggedUser ? <Navigate to={`/photos/${loggedUser._id}`} /> : <Navigate to="/login-register" />} />
+                <Route path="/photos/:userId" element={loggedUser ? <UserPhotosRoute /> : <Navigate to="/login-register" />} />
+                <Route path="/login-register" element={!loggedUser ? <LoginRegister onLogin={setLoggedUser} /> : <Navigate to="/" />}/>
               </Routes>
             </Paper>
           </Grid>
@@ -58,7 +58,6 @@ function PhotoShare() {
     </HashRouter>
   );
 }
-
 
 const root = ReactDOM.createRoot(document.getElementById("photoshareapp"));
 root.render(<PhotoShare />);

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { AppBar, Toolbar, Typography, Button } from "@mui/material";
+import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import "./styles.css";
 
-function TopBar({onLogout}) {
+function TopBar({loggedUser, onLogout}) {
   const loc = useLocation();    // stores the current URL path
-  const [rightTitle, setRightTitle] = useState("Welcome");  // stores the text shown on the right side of the top bar
-  const [user, setUser] = useState(null); // stores the information for the currently selected user, if available
+  const [pageTtile, setPageTtile] = useState("Welcome");  // stores the text shown on the right side of the top bar
+  const [selectedUser, setSelectedUser] = useState(null); // stores the information for the currently selected user, if available
   const [version, setVersion] = useState("");
   const navigate = useNavigate();
 
@@ -32,40 +33,40 @@ function TopBar({onLogout}) {
       // Fetch user data from the server using `axios` and update `user` state
       axios.get(`/user/${userId}`)
         .then((response) => {
-          setUser(response.data); // Set user data from server response
+          setSelectedUser(response.data); // Set user data from server response
         })
         .catch((error) => {
           console.error("Error fetching user data:", error);
-          setUser(null); // Clear user state if fetching fails
+          setSelectedUser(null); // Clear user state if fetching fails
         });
     } else {
       // Clear `user` if no valid `userId` is found in the URL
-      setUser(null);
+      setSelectedUser(null);
     }
   }, [loc.pathname]); // Dependency array to re-run this effect when `loc.pathname` changes
 
-  // Effect to update the `rightTitle` based on the current URL path and `user` information
+  // Effect to update the `pageTtile` based on the current URL path and `user` information
   useEffect(() => {
     if (loc.pathname === "/") {
-      // Default rightTitle for the home page
-      setRightTitle("Welcome");
+      // Default pageTtile for the home page
+      setPageTtile("Welcome");
     } else if (loc.pathname === "/users") {
-      // Default rightTitle for user list page
-      setRightTitle("List of Users");
-    } else if (loc.pathname.includes("/users/") && user) {
-      // Set rightTitle to the user's full name if on a user's detail page and `user` data is available
-      setRightTitle(`${user.first_name} ${user.last_name}`);
-    } else if (loc.pathname.includes("/photos/") && user) {
-      // Set rightTitle to reflect the photos of the user if on a user's photos page and `user` data is available
-      setRightTitle(`Photos of ${user.first_name} ${user.last_name}`);
+      // Default pageTtile for user list page
+      setPageTtile("List of Users");
+    } else if (loc.pathname.includes("/users/") && selectedUser) {
+      // Set pageTtile to the user's full name if on a user's detail page and `user` data is available
+      setPageTtile(`${selectedUser.first_name} ${selectedUser.last_name}`);
+    } else if (loc.pathname.includes("/photos/") && selectedUser) {
+      // Set pageTtile to reflect the photos of the user if on a user's photos page and `user` data is available
+      setPageTtile(`Photos of ${selectedUser.first_name} ${selectedUser.last_name}`);
     }
-  }, [loc, user]); // Dependencies on `loc` and `user` to re-run this effect when they change
+  }, [loc, selectedUser]); // Dependencies on `loc` and `user` to re-run this effect when they change
 
   const handleLogout = async () => {
     try {
       await axios.post("/admin/logout");
       onLogout(); // Clears the user state in PhotoShare
-      setRightTitle("Welcome");
+      setPageTtile("Welcome");
       navigate("/login-register");
     } catch (error) {
       console.error("Error during logout:", error);
@@ -79,13 +80,23 @@ function TopBar({onLogout}) {
         <Typography variant="h5" color="inherit" style={{ flex: 1 }}>
           Shariq Azeem
         </Typography>
-        {/* Right side of the toolbar displays the dynamic rightTitle based on the current page */}
-        <Typography variant="h6" color="inherit">
-          {rightTitle} {version && ` - ${version}`}
+        {/* Right side of the toolbar displays the dynamic pageTtile based on the current page */}
+        <Typography variant="h5" color="inherit" style={{ flex: 1 }}>
+          {pageTtile}
         </Typography>
-        {user ? (
-          <Button color="inherit" onClick={handleLogout}>Logout</Button>
-        ) : (<></>)}
+        <Box display="flex" flexDirection="column" alignItems="center" ml={2}>
+          {loggedUser ? (
+            <Typography variant="h5" color="inherit">
+              Hi {loggedUser.first_name}
+              <Button onClick={handleLogout}>Logout</Button>
+            </Typography>
+          ) : (
+            <Typography variant="h5" color="inherit">
+              Please Login
+            </Typography>
+          )}
+          <Typography variant="caption" color="inherit">{version && `Version: ${version}`}</Typography>
+        </Box>
       </Toolbar>
     </AppBar>
   );

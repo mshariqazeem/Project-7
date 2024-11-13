@@ -73,7 +73,7 @@ function requireLogin(request, response, next) {
   if (!request.session.user) {
     return response.status(401).send("Unauthorized");
   }
-  next();
+  return next();
 }
 
 /**
@@ -150,19 +150,18 @@ try {
 
 // Login route
 app.post("/admin/login", async (request, response) => {
-  const { login_name } = request.body;
+  const { login_name, password } = request.body;
   
-
-  if (!login_name) {
-    console.log("Missing login_name in request body");
-    return response.status(400).send("Missing login_name");
+  if (!login_name || !password) {
+    console.log("Missing login_name or password in request body");
+    return response.status(400).send("Missing login_name or password");
   }
 
   try {
     const user = await User.findOne({ login_name });
-    if (!user) {
-      console.log("Invalid login name:", login_name);
-      return response.status(400).send("Invalid login name");
+    if (!user || user.password !== password) {
+      console.log("Invalid login name or password");
+      return response.status(400).send("Invalid login name or password");
     }
 
     request.session.user = {
@@ -170,26 +169,69 @@ app.post("/admin/login", async (request, response) => {
       first_name: user.first_name,
       last_name: user.last_name,
     };
-    response.status(200).json(request.session.user);
+
+    return response.status(200).json(request.session.user);
   } catch (error) {
     console.error("Error during login:", error);
-    response.status(500).send("Internal server error");
+    return response.status(500).send("Internal server error");
   }
 });
 
+// Register user route
+app.post("/user", async (request, response) => {
+  const { login_name, password, first_name, last_name, location, description, occupation } = request.body;
+
+  // Validate input fields
+  if (!login_name || !password || !first_name || !last_name) {
+    console.log("Missing one of the required fields");
+    return response.status(400).send("Missing one or more required fields: login_name, password, first_name, last_name");
+  }
+
+  try {
+    // Check if login_name already exists
+    const existingUser = await User.findOne({ login_name });
+    if (existingUser) {
+      console.log("Login name already exists");
+      return response.status(400).send("Login name already exists");
+    }
+
+    // Create new user
+    const newUser = new User({
+      login_name,
+      password,
+      first_name,
+      last_name,
+      location,
+      description,
+      occupation,
+    });
+
+    await newUser.save();
+    return response.status(200).json({ login_name: newUser.login_name, _id: newUser._id });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    return response.status(500).send("Internal server error");
+  }
+});
 
 // Logout route
-app.post("/admin/logout", (request, response) => {
+app.post("/admin/logout", async (request, response) => {
   if (!request.session.user) {
     return response.status(400).send("No user is currently logged in");
   }
 
-  request.session.destroy((err) => {
-    if (err) {
-      return response.status(500).send("Error logging out");
-    }
-    response.status(200).send("Logged out successfully");
+  // Wrap session destruction in a promise to use async/await
+  await new Promise((resolve, reject) => {
+    request.session.destroy((err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
   });
+
+  return response.status(200).send("Logged out successfully");
 });
 
 /**
