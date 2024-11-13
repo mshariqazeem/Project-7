@@ -48,7 +48,8 @@ app.use(bodyParser.json());
 
 // Load the Mongoose schema for User, Photo, and SchemaInfo
 const User = require("./schema/user.js");
-const Photo = require("./schema/photo.js");
+const {Photo, Comment} = require("./schema/photo.js");
+
 const SchemaInfo = require("./schema/schemaInfo.js");
 
 // XXX - Your submission should work without this line. Comment out or delete
@@ -320,6 +321,45 @@ app.get("/photosOfUser/:id", requireLogin, async function (request, response) {
   }
 });
 
+
+app.post("/commentsOfPhoto/:photo_id", async (request, response) => {
+  if(request.session.user != null) {
+    const photo_id = request.params.photo_id;
+    const comment = request.body.comment;
+    console.log(comment);
+    const newComment = new Comment({
+      comment: comment,
+      user_id: request.session.user._id,
+      date_time: new Date()
+    });
+    console.log(newComment);
+    const photo = await Photo.findById(photo_id).populate("comments");
+    if(!photo) {
+      response.json(404).send("Photo not found");
+    }
+    photo.comments.push(newComment);
+    const savedPhoto = await photo.save();
+    console.log(savedPhoto.comments.at(-1));
+    const savedComment = savedPhoto.comments.at(-1);
+    const formattedComment = {
+      _id: savedComment._id,
+      comment: savedComment.comment,
+      date_time: savedComment.date_time,
+      user: savedComment.user_id
+        ? {
+            _id: request.session.user._id,
+            first_name: request.session.user.first_name,
+            last_name: request.session.user.last_name,
+          }
+        : null,
+    }
+    response.status(200).json(formattedComment);
+
+  } else {
+    response.status(401).send("UnAuthorized please login");
+  }
+}
+);
 const server = app.listen(3000, function () {
   const port = server.address().port;
   console.log(

@@ -7,7 +7,7 @@ import "./styles.css";
 
 function UserPhotos({ userId }) {
   const [photos, setPhotos] = useState([]); // stores an array of photo objects for the specified user
-
+  const [comment, setComment] = useState("");
   // `useEffect` runs when `userId` changes, fetching the user's photos from the model
   useEffect(() => {
     axios.get(`/photosOfUser/${userId}`)
@@ -17,8 +17,32 @@ function UserPhotos({ userId }) {
       .catch((error) => {
         console.error("Error fetching user photos:", error);
       });
-  }, [userId]); // Dependency array includes `userId` to re-fetch photos if it changes
+  }, [userId, photos]); // Dependency array includes `userId` to re-fetch photos if it changes
 
+  const addNewComment = async (e, photoId) => {
+    e.preventDefault();
+    console.log(comment + " " + photoId);
+    const body = {
+      comment: comment    
+    };
+    axios.post(`/commentsOfPhoto/${photoId}`, body)
+      .then((response) => {
+        console.log("succesfully added comment");
+        console.log(response.data);
+        const newComment = response.data;
+        setPhotos((photos) =>
+          photos.map((photo) =>
+            photo._id === photoId
+              ? { ...photo, comments: [...photo.comments, newComment] }
+              : photo
+          )
+        );
+      })
+      .catch((error) => {
+        console.error("error adding comments:", comment);
+      });
+    setComment("");
+  }
   return (
     <div className="photo-section-container">
       {/* Header for the photos section */}
@@ -52,6 +76,14 @@ function UserPhotos({ userId }) {
                 </Typography>
               </div>
             ))}
+              <div className="newCommentsForm">
+                <form onSubmit={(e) => addNewComment(e,photo._id)}>
+                  <input type="text" name="newComment" value = {comment} placeholder="Comment ..." onChange={(e) => {
+                    setComment(e.target.value);
+                  }} required/>
+                  <input type="submit" value="submit" />
+                </form>
+              </div>
           </div>
         </div>
       ))}

@@ -32,8 +32,8 @@ const photoSchema = new mongoose.Schema({
  * Create a Mongoose Model for a Photo using the photoSchema.
  */
 const Photo = mongoose.model("Photo", photoSchema);
-
+const Comment = mongoose.model("Comment", commentSchema)
 /**
  * Make this available to our application.
  */
-module.exports = Photo;
+module.exports = {Photo, Comment};
