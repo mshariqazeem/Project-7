@@ -37,7 +37,8 @@ mongoose.Promise = require("bluebird");
 const session = require("express-session");
 const bodyParser = require("body-parser");
 const multer = require("multer");
-
+const fs = require("fs");
+const processFormBody = multer({storage: multer.memoryStorage()}).single('uploadedphoto');
 // const async = require("async");
 
 const express = require("express");
@@ -48,7 +49,8 @@ app.use(bodyParser.json());
 
 // Load the Mongoose schema for User, Photo, and SchemaInfo
 const User = require("./schema/user.js");
-const Photo = require("./schema/photo.js");
+const {Photo, Comment} = require("./schema/photo.js");
+
 const SchemaInfo = require("./schema/schemaInfo.js");
 
 // XXX - Your submission should work without this line. Comment out or delete
@@ -320,6 +322,91 @@ app.get("/photosOfUser/:id", requireLogin, async function (request, response) {
   }
 });
 
+
+app.post("/commentsOfPhoto/:photo_id",  async (request, response) => {
+  if(request.session.user != null) {
+    const photo_id = request.params.photo_id;
+    const comment = request.body.comment;
+    console.log(comment);
+    const newComment = new Comment({
+      comment: comment,
+      user_id: request.session.user._id,
+      date_time: new Date()
+    });
+    console.log(newComment);
+    const photo = await Photo.findById(photo_id).populate("comments");
+    if(!photo) {
+      response.json(404).send("Photo not found");
+    }
+    photo.comments.push(newComment);
+    const savedPhoto = await photo.save();
+    console.log(savedPhoto.comments.at(-1));
+    const savedComment = savedPhoto.comments.at(-1);
+    const formattedComment = {
+      _id: savedComment._id,
+      comment: savedComment.comment,
+      date_time: savedComment.date_time,
+      user: savedComment.user_id
+        ? {
+            _id: request.session.user._id,
+            first_name: request.session.user.first_name,
+            last_name: request.session.user.last_name,
+          }
+        : null,
+    }
+    response.status(200).json(formattedComment);
+
+  } else {
+    response.status(401).send("UnAuthorized please login");
+  }
+}
+);
+
+app.post("/photos/new", async (request, response) => {
+  try {
+    if(request.session.user != null) {
+      processFormBody(request, response, function (err) {
+        if (err || !request.file) {
+            response.status(400).send("No File");
+            return;
+        }
+      
+        // request.file has the following properties of interest:
+        //   fieldname    - Should be 'uploadedphoto' since that is what we sent
+        //   originalname - The name of the file the user uploaded
+        //   mimetype     - The mimetype of the image (e.g., 'image/jpeg',
+        //                  'image/png')
+        //   buffer       - A node Buffer containing the contents of the file
+        //   size         - The size of the file in bytes
+      
+        // XXX - Do some validation here.
+      
+        // We need to create the file in the directory "images" under an unique name.
+        // We make the original file name unique by adding a unique prefix with a
+        // timestamp.
+        const timestamp = new Date().valueOf();
+        const filename = 'U' +  String(timestamp) + request.file.originalname;
+      
+        fs.writeFile("./images/" + filename, request.file.buffer, async function (err) {
+          // XXX - Once you have the file written into your images directory under the
+          // name filename you can create the Photo object in the database
+          const photo = new Photo( {
+            file_name: filename,
+            date_time: timestamp,
+            user_id: request.session.user._id,
+            comments: []
+          });
+          await photo.save();
+          response.status(200).send("photo uploaded successfully");
+        });
+      });
+    } else {
+      response.status(401).send("UnAuthorized please login");
+    }
+  } catch(error) {
+    response.status(400).json(error);
+  }
+});
 const server = app.listen(3000, function () {
   const port = server.address().port;
   console.log(
