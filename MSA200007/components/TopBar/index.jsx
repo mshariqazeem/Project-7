@@ -9,6 +9,7 @@ function TopBar({loggedUser, onLogout}) {
   const [pageTtile, setPageTtile] = useState("Welcome");  // stores the text shown on the right side of the top bar
   const [selectedUser, setSelectedUser] = useState(null); // stores the information for the currently selected user, if available
   const [version, setVersion] = useState("");
+  const [uploadInput, setUploadInput] = useState(null);
   const navigate = useNavigate();
 
   // Effect to fetch version data
@@ -73,6 +74,22 @@ function TopBar({loggedUser, onLogout}) {
     }
   };
 
+  const handleUploadButtonClicked = async (e) => {
+    e.preventDefault();
+    if (uploadInput.files.length > 0) {
+      // Create a DOM form and add the file to it under the name uploadedphoto
+      const domForm = new FormData();
+      domForm.append('uploadedphoto', uploadInput.files[0]);
+      //console.log(domForm);
+      axios.post('/photos/new', domForm)
+        .then((res) => {
+          console.log(res);
+          setUploadInput(null);
+        })
+        .catch(err => console.log(`POST ERR: ${err}`));
+    }
+  }
+
   return (
     <AppBar className="topbar-appBar" position="absolute">
       <Toolbar>
@@ -89,6 +106,12 @@ function TopBar({loggedUser, onLogout}) {
             <Typography variant="h5" color="inherit">
               Hi {loggedUser.first_name}
               <Button onClick={handleLogout}>Logout</Button>
+              <input type="file" accept="image/*" name="uploadedphoto" ref={(domFileRef) => {setUploadInput(domFileRef) }} />
+              {
+                uploadInput != null && <Button onClick={(e) => {
+                  handleUploadButtonClicked(e);
+                }}>Upload the photo</Button>
+              }
             </Typography>
           ) : (
             <Typography variant="h5" color="inherit">
