@@ -7,7 +7,7 @@ import "./styles.css";
 
 function UserPhotos({ userId }) {
   const [photos, setPhotos] = useState([]); // stores an array of photo objects for the specified user
-  const [comment, setComment] = useState("");
+  //const [comment, setComment] = useState("");
   // `useEffect` runs when `userId` changes, fetching the user's photos from the model
   useEffect(() => {
     axios.get(`/photosOfUser/${userId}`)
@@ -21,6 +21,7 @@ function UserPhotos({ userId }) {
 
   const addNewComment = async (e, photoId) => {
     e.preventDefault();
+    const comment = document.getElementById("newComment_"+photoId).value;
     console.log(comment + " " + photoId);
     const body = {
       comment: comment    
@@ -30,19 +31,15 @@ function UserPhotos({ userId }) {
         console.log("succesfully added comment");
         console.log(response.data);
         const newComment = response.data;
-        setPhotos((photos) =>
-          photos.map((photo) =>
-            photo._id === photoId
-              ? { ...photo, comments: [...photo.comments, newComment] }
-              : photo
-          )
+        setPhotos((prevPhotos) => prevPhotos.map((photo) => (photo._id === photoId ? { ...photo, comments: [...photo.comments, newComment] } : photo))
         );
+        document.getElementById("newComment_"+photoId).value="";
       })
       .catch((error) => {
-        console.error("error adding comments:", comment);
+        console.error("error adding comments:", error);
       });
-    setComment("");
-  }
+    //setComment("");
+  };
   return (
     <div className="photo-section-container">
       {/* Header for the photos section */}
@@ -78,9 +75,7 @@ function UserPhotos({ userId }) {
             ))}
               <div className="newCommentsForm">
                 <form onSubmit={(e) => addNewComment(e,photo._id)}>
-                  <input type="text" name="newComment" value = {comment} placeholder="Comment ..." onChange={(e) => {
-                    setComment(e.target.value);
-                  }} required/>
+                  <input type="text" name="newComment" placeholder="Comment ..." id={`newComment_`+photo._id} required/>
                   <input type="submit" value="submit" />
                 </form>
               </div>

@@ -49,7 +49,7 @@ app.use(bodyParser.json());
 
 // Load the Mongoose schema for User, Photo, and SchemaInfo
 const User = require("./schema/user.js");
-const {Photo, Comment} = require("./schema/photo.js");
+const Photo = require("./schema/photo.js");
 
 const SchemaInfo = require("./schema/schemaInfo.js");
 
@@ -328,11 +328,11 @@ app.post("/commentsOfPhoto/:photo_id",  async (request, response) => {
     const photo_id = request.params.photo_id;
     const comment = request.body.comment;
     console.log(comment);
-    const newComment = new Comment({
+    const newComment = {
       comment: comment,
       user_id: request.session.user._id,
       date_time: new Date()
-    });
+    };
     console.log(newComment);
     const photo = await Photo.findById(photo_id).populate("comments");
     if(!photo) {
@@ -352,8 +352,8 @@ app.post("/commentsOfPhoto/:photo_id",  async (request, response) => {
             first_name: request.session.user.first_name,
             last_name: request.session.user.last_name,
           }
-        : null,
-    }
+        : null
+    };
     response.status(200).json(formattedComment);
 
   } else {
@@ -387,9 +387,12 @@ app.post("/photos/new", async (request, response) => {
         const timestamp = new Date().valueOf();
         const filename = 'U' +  String(timestamp) + request.file.originalname;
       
-        fs.writeFile("./images/" + filename, request.file.buffer, async function (err) {
+        fs.writeFile("./images/" + filename, request.file.buffer, async function (error) {
           // XXX - Once you have the file written into your images directory under the
           // name filename you can create the Photo object in the database
+          if(error) {
+            response.status(400).send("No File");
+          }
           const photo = new Photo( {
             file_name: filename,
             date_time: timestamp,
