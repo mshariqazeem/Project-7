@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
+import { AppBar, Toolbar, Typography, Button, Box, Dialog, DialogActions, DialogContent, DialogTitle  } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./styles.css";
@@ -10,6 +10,7 @@ function TopBar({loggedUser, onLogout}) {
   const [selectedUser, setSelectedUser] = useState(null); // stores the information for the currently selected user, if available
   const [version, setVersion] = useState("");
   const [uploadInput, setUploadInput] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   // Effect to fetch version data
@@ -85,10 +86,19 @@ function TopBar({loggedUser, onLogout}) {
         .then((res) => {
           console.log(res);
           setUploadInput(null);
+          setDialogOpen(false);
         })
         .catch(err => console.log(`POST ERR: ${err}`));
     }
-  }
+  };
+
+  const handleDialogClose = () => {
+    setDialogOpen(false);  // Close dialog without uploading
+  };
+
+  const handleOpenDialog = () => {
+    setDialogOpen(true);  // Open the upload dialog
+  };
 
   return (
     <AppBar className="topbar-appBar" position="absolute">
@@ -106,12 +116,11 @@ function TopBar({loggedUser, onLogout}) {
             <Typography variant="h5" color="inherit">
               Hi {loggedUser.first_name}
               <Button onClick={handleLogout}>Logout</Button>
-              <input type="file" accept="image/*" name="uploadedphoto" ref={(domFileRef) => {setUploadInput(domFileRef) }} />
+              <Button onClick={handleOpenDialog}>Upload Photo</Button>
+              {/* <input type="file" accept="image/*" name="uploadedphoto" ref={(domFileRef) => {setUploadInput(domFileRef); }} />
               {
-                uploadInput != null && <Button onClick={(e) => {
-                  handleUploadButtonClicked(e);
-                }}>Upload the photo</Button>
-              }
+                uploadInput != null && <Button onClick={(e) => {handleUploadButtonClicked(e);}}>Upload the photo</Button>
+              } */}
             </Typography>
           ) : (
             <Typography variant="h5" color="inherit">
@@ -121,6 +130,25 @@ function TopBar({loggedUser, onLogout}) {
           <Typography variant="caption" color="inherit">{version && `Version: ${version}`}</Typography>
         </Box>
       </Toolbar>
+      <Dialog open={dialogOpen} onClose={handleDialogClose}>
+        <DialogTitle>Upload Photo</DialogTitle>
+        <DialogContent>
+          <input 
+            type="file" 
+            accept="image/*" 
+            name="uploadedphoto" 
+            ref={(domFileRef) => { setUploadInput(domFileRef); }} 
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleUploadButtonClicked} color="primary">
+            Upload
+          </Button>
+        </DialogActions>
+      </Dialog>
     </AppBar>
   );
 }
