@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Typography } from "@mui/material";
+import { Button, Typography } from "@mui/material";
 import axios from "axios";
 
 import "./styles.css";
 
-function UserDetail({ userId }) {
+function UserDetail({ userId, loggedUserId, setLoggedUser }) {
   const [user, setUser] = useState(null); // stores the details of the user fetched by `userId`
 
   // `useEffect` fetches the user data whenever `userId` changes
@@ -22,6 +22,14 @@ function UserDetail({ userId }) {
   // If `user` data is not yet loaded, display a loading message
   if (!user) return <Typography>Loading...</Typography>;
 
+  const deleteUser = async (userId) => {
+    axios.delete(`/user/delete/${userId}`).then(response => {
+      console.log(response);
+      setLoggedUser(null);
+    }).catch((error) => {
+      console.log(error);
+    })
+  }
   return (
     <div className="user-detail-container">
       {/* Display user's full name in a header */}
@@ -34,6 +42,8 @@ function UserDetail({ userId }) {
       
       {/* Link to navigate to the user's photos */}
       <Link to={`/photos/${userId}`} className="user-detail-link">View Photos</Link>
+      <br/>
+      {loggedUserId === userId && <Button variant="contained" color="error" onClick={() => deleteUser(userId)}>Delete User</Button>}
     </div>
   );
 }
