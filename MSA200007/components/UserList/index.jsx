@@ -11,7 +11,7 @@ import axios from "axios";
 
 import "./styles.css";
 
-function UserList() {
+function UserList({loggedUser}) {
   const [users, setUsers] = useState([]); // stores an array of user objects fetched from the model
 
   // `useEffect` hook runs only once when the component mounts (empty dependency array),

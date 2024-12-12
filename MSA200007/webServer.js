@@ -285,13 +285,13 @@ app.get("/photosOfUser/:id", requireLogin, async function (request, response) {
       return response.status(400).send("User not found");
     }
 
-    const photos = await Photo.find({ user_id: id }, "_id user_id file_name date_time comments")
+    const photos = await Photo.find({ user_id: id }, "_id user_id file_name date_time comments likes")
       .populate({
         path: "comments.user_id",
         model: "User",
         select: "_id first_name last_name",
       });
-
+    //console.log(photos);
     const photosWithComments = photos.map((photo) => {
       const formattedComments = photo.comments.map((comment) => ({
         _id: comment._id,
@@ -305,16 +305,16 @@ app.get("/photosOfUser/:id", requireLogin, async function (request, response) {
             }
           : null,
       }));
-
       return {
         _id: photo._id,
         user_id: photo.user_id,
         file_name: photo.file_name,
         date_time: photo.date_time,
+        likes: photo.likes,
         comments: formattedComments,
       };
     });
-
+    //console.log(photosWithComments);
     return response.status(200).json(photosWithComments);
   } catch (error) {
     console.error("Error fetching photos for user:", error);
@@ -408,6 +408,95 @@ app.post("/photos/new", async (request, response) => {
     }
   } catch(error) {
     response.status(400).json(error);
+  }
+});
+
+app.delete("/comment/delete/", async (request, response) => {
+   //const comment_id = request.params.comment_id;
+   if(request.session.user != null) {
+      try {
+        const photo_id = request.body.photo_id;
+        const comment_id = request.body.comment_id;
+        console.log(photo_id, comment_id);
+        await Photo.updateOne(
+          { _id: photo_id },
+          { $pull: { comments: { _id: comment_id } } }
+        )
+        .then((result) => {
+          console.log(`Deleted comments`);
+        })
+        .catch((error) => {
+          console.error("Error deleting comment:", error);
+        });
+    } catch (error) {
+      response.status(500).send(error);
+    }
+   } else {
+    response.status(401).send("UnAuthorized please login");
+   }
+});
+
+app.delete("/photo/delete/:photoId", async (request, response) => {
+  if(request.session.user != null) {
+    try {
+      const photoId = request.params.photoId;
+      const photo = Photo.findById(photoId);
+      if(photo.user_id !== request.session.user._id) {
+        response.status(401).send("Unauthorized, you can only delete your photos");
+      }
+      console.log(photoId);
+      await Photo.deleteOne({_id: photoId});
+    } catch (error) {
+
+    }
+  } else {
+    response.status(401).send("UnAuthorized please login");
+  }
+});
+
+app.post("/addLike" , async (request, response) => {
+  if(request.session.user != null) {
+    const {photoId, userId} = request.body;
+    //console.log(photoId, userId);
+    const photo = await Photo.findById(photoId);
+    photo.likes.push(userId);
+    await photo.save();
+    response.status(200).send("Sucessfully added like");
+
+  } else {
+    response.status(401).send("UnAuthorized please login");
+  }
+});
+app.post("/removeLike" , async (request, response) => {
+  if(request.session.user != null) {
+    const {photoId, userId} = request.body;
+    //console.log(photoId, userId);
+    const photo = await Photo.findById(photoId);
+    photo.likes = photo.likes.filter(id => id != userId);
+    await photo.save();
+    response.status(200).send("Sucessfully removed like");
+
+  } else {
+    response.status(401).send("UnAuthorized please login");
+  }
+});
+app.delete("/user/delete/:userId", async (request, response) => {
+  if(request.session.user != null)  {
+    const userId = request.params.userId;
+    try {
+      if(request.session.user._id != userId) {
+        response.status(401).send("UnAuthorized for this operation");
+      }
+      await User.deleteOne({_id : userId});
+      request.session.destroy();
+      response.status(200).send("Deleted User");
+      
+    } catch(error) {
+      response.status(404).send(error);
+      console.log(error);
+    }
+  } else {
+    response.status(401).send("UnAuthorized please login");
   }
 });
 const server = app.listen(3000, function () {
